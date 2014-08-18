@@ -28,6 +28,7 @@ tap.test('records', function(t) {
 });
 
 tap.test('checks if filtered request is generated', function(t) {
+  nock.recorder.clear();
   nock.recorder.setGeneratedBodyRequestFilters([{
     method: 'POST',
     path: '/session',
@@ -51,11 +52,44 @@ tap.test('checks if filtered request is generated', function(t) {
       nock.restore();
       ret = nock.recorder.play();
       t.equal(ret.length, 1);
-      var expected = '\nnock(\'http://github.com\')\n  .filteringRequestBody(/"created_at":(("[^"]+")|null),?/g, "created_at":"now")\n  .post(\'/session\', "{\\"data\\":{\\"created_at\\":\\"now\\"}}")';
+      var expected = '\nnock(\'http://github.com\')\n  .filteringRequestBody(/"created_at":(("[^"]+")|null),?/g, \'"created_at":"now"\')\n  .post(\'/session\', "{\\"data\\":{\\"created_at\\":\\"now\\"}}")';
       t.equal(ret[0].indexOf(expected), 0);
       t.end();
     });
   });
   req.end('{"data":{"created_at":"2014-05-06T15:00:00-07:00"}}');
+  return req;
+});
+
+tap.test('checks if filtered path is generated', function(t) {
+  nock.recorder.clear();
+  nock.recorder.setGeneratedPathFilters([{
+    path: '/session',
+    pattern: /sign_in=([^&]+)/g,
+    replacement: "sign_in=0"
+  }]);
+
+  var cb1 = false
+    , options = { method: 'GET'
+                , host:'github.com'
+                , path:'/session?sign_in=1' }
+  ;
+
+  nock.restore();
+  nock.recorder.rec(true);
+  var req = http.request(options, function(res) {
+    cb1 = true
+    var ret;
+
+    res.once('end', function() {
+      nock.restore();
+      ret = nock.recorder.play();
+      t.equal(ret.length, 1);
+      var expected = '\nnock(\'http://github.com\')\n  .filteringPath(/sign_in=([^&]+)/g, \'sign_in=0\')\n  .get(\'/session?sign_in=0\')';
+      t.equal(ret[0].indexOf(expected), 0);
+      t.end();
+    });
+  });
+  req.end('');
   return req;
 });

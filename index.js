@@ -5,6 +5,7 @@ module.exports.recorder = {
   rec: recorder.record,
   clear: recorder.clear,
   play: recorder.outputs,
-  setGeneratedBodyRequestFilters: recorder.setGeneratedBodyRequestFilters
+  setGeneratedBodyRequestFilters: recorder.setGeneratedBodyRequestFilters,
+  setGeneratedPathFilters: recorder.setGeneratedPathFilters
 };
 module.exports.restore = recorder.restore;
